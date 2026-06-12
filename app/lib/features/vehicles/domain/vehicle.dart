@@ -6,6 +6,7 @@ class Vehicle {
   final String? marca;
   final String? modelo;
   final String? color;
+  final String? customerId;
 
   const Vehicle({
     required this.id,
@@ -14,5 +15,6 @@ class Vehicle {
     this.marca,
     this.modelo,
     this.color,
+    this.customerId,
   });
 }

@@ -19,11 +19,26 @@ class WorkOrdersController extends AsyncNotifier<List<WorkOrder>> {
     state = await AsyncValue.guard(() => ref.read(workOrderRepositoryProvider).list());
   }
 
+  /// Avanza la orden al siguiente estado con actualización **optimista**: la UI
+  /// refleja el cambio de inmediato y, si el servidor falla, se revierte.
   Future<void> advance(WorkOrder order) async {
     final next = order.nextStatus;
     if (next == null) return;
-    await ref.read(workOrderRepositoryProvider).changeStatus(order.id, next);
-    await refreshList();
+
+    final previous = state;
+    final list = state.value;
+    if (list != null) {
+      state = AsyncData([
+        for (final o in list) o.id == order.id ? o.copyWith(estado: next) : o,
+      ]);
+    }
+
+    try {
+      await ref.read(workOrderRepositoryProvider).changeStatus(order.id, next);
+    } catch (e) {
+      state = previous; // revierte el cambio optimista
+      rethrow;
+    }
   }
 
   Future<void> create({

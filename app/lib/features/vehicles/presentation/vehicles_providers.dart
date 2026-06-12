@@ -24,11 +24,18 @@ class VehiclesController extends AsyncNotifier<List<Vehicle>> {
     required String placa,
     required String tipo,
     String? marca,
+    String? modelo,
     String? color,
+    String? customerId,
   }) async {
-    await ref
-        .read(vehicleRepositoryProvider)
-        .create(placa: placa, tipo: tipo, marca: marca, color: color);
+    await ref.read(vehicleRepositoryProvider).create(
+          placa: placa,
+          tipo: tipo,
+          marca: marca,
+          modelo: modelo,
+          color: color,
+          customerId: customerId,
+        );
     await refreshList();
   }
 }

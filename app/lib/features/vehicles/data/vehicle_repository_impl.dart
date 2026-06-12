@@ -15,13 +15,21 @@ class VehicleRepositoryImpl implements VehicleRepository {
     required String placa,
     required String tipo,
     String? marca,
+    String? modelo,
     String? color,
+    String? customerId,
   }) {
     return remote.create({
       'placa': placa,
       'tipo': tipo,
       if (marca != null && marca.isNotEmpty) 'marca': marca,
+      if (modelo != null && modelo.isNotEmpty) 'modelo': modelo,
       if (color != null && color.isNotEmpty) 'color': color,
+      if (customerId != null && customerId.isNotEmpty) 'customerId': customerId,
     });
   }
+
+  @override
+  Future<Vehicle> linkCustomer(String vehicleId, String customerId) =>
+      remote.update(vehicleId, {'customerId': customerId});
 }

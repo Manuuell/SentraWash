@@ -22,6 +22,8 @@ class WorkOrder {
   final double descuento;
   final double total;
   final List<WorkOrderItem> items;
+  final String? vehicleId;
+  final DateTime fechaIngreso;
 
   const WorkOrder({
     required this.id,
@@ -31,13 +33,30 @@ class WorkOrder {
     required this.descuento,
     required this.total,
     required this.items,
+    required this.fechaIngreso,
+    this.vehicleId,
   });
 
   /// Próximo estado en el flujo, o null si es terminal.
+  /// recibido → en_proceso → secado → listo → entregado.
   String? get nextStatus => switch (estado) {
         'recibido' => 'en_proceso',
-        'en_proceso' => 'listo',
+        'en_proceso' => 'secado',
+        'secado' => 'listo',
         'listo' => 'entregado',
         _ => null,
       };
+
+  /// Copia con el estado cambiado (para actualización optimista en la UI).
+  WorkOrder copyWith({String? estado}) => WorkOrder(
+        id: id,
+        numeroOrden: numeroOrden,
+        estado: estado ?? this.estado,
+        subtotal: subtotal,
+        descuento: descuento,
+        total: total,
+        items: items,
+        fechaIngreso: fechaIngreso,
+        vehicleId: vehicleId,
+      );
 }

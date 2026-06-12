@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../customers/domain/customer.dart';
+import '../../customers/presentation/customers_providers.dart';
+import 'vehicle_type_meta.dart';
 import 'vehicles_providers.dart';
 import 'widgets/vehicle_form_dialog.dart';
 
@@ -10,6 +13,11 @@ class VehiclesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vehicles = ref.watch(vehiclesControllerProvider);
+    // Mapa id → nombre para mostrar el dueño de cada vehículo.
+    final owners = <String, String>{
+      for (final c in ref.watch(customersControllerProvider).value ?? const <Customer>[])
+        c.id: c.nombre,
+    };
 
     return Scaffold(
       appBar: AppBar(title: const Text('Vehículos')),
@@ -46,14 +54,26 @@ class VehiclesPage extends ConsumerWidget {
               separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (_, i) {
                 final v = items[i];
+                final owner = v.customerId != null ? owners[v.customerId] : null;
                 return ListTile(
-                  leading: const CircleAvatar(child: Icon(Icons.directions_car)),
+                  leading: CircleAvatar(child: Icon(vehicleTypeIcon(v.tipo))),
                   title: Text(v.placa, style: const TextStyle(fontWeight: FontWeight.bold)),
                   subtitle: Text([
-                    v.tipo,
+                    vehicleTypeLabel(v.tipo),
                     if (v.marca != null) v.marca!,
                     if (v.color != null) v.color!,
                   ].join(' · ')),
+                  trailing: owner != null
+                      ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.person, size: 16, color: Colors.grey),
+                            const SizedBox(width: 4),
+                            Text(owner, style: TextStyle(color: Colors.grey.shade700)),
+                          ],
+                        )
+                      : Text('Sin cliente',
+                          style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
                 );
               },
             );

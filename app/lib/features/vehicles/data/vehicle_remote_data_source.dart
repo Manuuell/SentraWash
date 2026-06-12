@@ -28,4 +28,13 @@ class VehicleRemoteDataSource {
       throw mapDioError(e);
     }
   }
+
+  Future<Vehicle> update(String id, Map<String, dynamic> body) async {
+    try {
+      final res = await dio.patch('/vehicles/$id', data: body);
+      return VehicleModel.fromJson(res.data as Map<String, dynamic>);
+    } catch (e) {
+      throw mapDioError(e);
+    }
+  }
 }

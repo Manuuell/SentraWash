@@ -9,5 +9,6 @@ class VehicleModel {
         marca: json['marca'] as String?,
         modelo: json['modelo'] as String?,
         color: json['color'] as String?,
+        customerId: json['customerId'] as String?,
       );
 }

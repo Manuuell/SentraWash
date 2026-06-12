@@ -5,13 +5,15 @@ import 'package:intl/intl.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../domain/work_order.dart';
+import 'wash_stage.dart';
 import 'work_orders_providers.dart';
 
 final _cop = NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
 
 const _estadoColors = {
   'recibido': Colors.blueGrey,
-  'en_proceso': Colors.orange,
+  'en_proceso': Colors.blue,
+  'secado': Colors.lightBlue,
   'listo': Colors.green,
   'entregado': Colors.teal,
   'cancelado': Colors.red,
@@ -89,7 +91,8 @@ class _OrderCard extends ConsumerWidget {
                     style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                 const Spacer(),
                 Chip(
-                  label: Text(order.estado, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                  label: Text(estadoLabel(order.estado),
+                      style: const TextStyle(color: Colors.white, fontSize: 12)),
                   backgroundColor: color,
                   visualDensity: VisualDensity.compact,
                 ),
@@ -107,7 +110,7 @@ class _OrderCard extends ConsumerWidget {
                   FilledButton.tonalIcon(
                     onPressed: () => _advance(context, ref),
                     icon: const Icon(Icons.arrow_forward, size: 18),
-                    label: Text('A ${order.nextStatus}'),
+                    label: Text(advanceLabel(order.nextStatus)),
                   ),
               ],
             ),

@@ -7,6 +7,11 @@ abstract class VehicleRepository {
     required String placa,
     required String tipo,
     String? marca,
+    String? modelo,
     String? color,
+    String? customerId,
   });
+
+  /// Vincula (o reasigna) el cliente dueño de un vehículo existente.
+  Future<Vehicle> linkCustomer(String vehicleId, String customerId);
 }
