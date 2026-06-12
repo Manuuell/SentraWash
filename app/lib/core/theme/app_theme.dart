@@ -7,14 +7,21 @@ class AppTheme {
 
   static ThemeData light() => fromBranding();
 
-  static ThemeData fromBranding({Color seed = brandColor}) {
-    final scheme = ColorScheme.fromSeed(seedColor: seed);
+  static ThemeData dark() => fromBranding(brightness: Brightness.dark);
+
+  static ThemeData fromBranding({
+    Color seed = brandColor,
+    Brightness brightness = Brightness.light,
+  }) {
+    final scheme = ColorScheme.fromSeed(seedColor: seed, brightness: brightness);
+    final isDark = brightness == Brightness.dark;
     return ThemeData(
       useMaterial3: true,
       colorScheme: scheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: scheme.primary,
-        foregroundColor: scheme.onPrimary,
+        // En claro, barra con el color de marca; en oscuro, superficie sobria.
+        backgroundColor: isDark ? scheme.surface : scheme.primary,
+        foregroundColor: isDark ? scheme.onSurface : scheme.onPrimary,
         elevation: 0,
       ),
     );

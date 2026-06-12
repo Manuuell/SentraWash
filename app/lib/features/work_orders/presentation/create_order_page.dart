@@ -25,7 +25,7 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
 
   void _addItem() {
     if (_selectedServiceId == null) return;
-    final services = ref.read(servicesControllerProvider).valueOrNull ?? [];
+    final services = ref.read(servicesControllerProvider).value ?? [];
     final matches = services.where((s) => s.id == _selectedServiceId);
     if (matches.isEmpty) return;
     final service = matches.first;
@@ -83,7 +83,7 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
                 DropdownButtonFormField<String>(
                   value: _vehicleId,
                   decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Selecciona un vehículo'),
-                  items: (vehicles.valueOrNull ?? [])
+                  items: (vehicles.value ?? [])
                       .map((v) => DropdownMenuItem(value: v.id, child: Text('${v.placa} · ${v.tipo}')))
                       .toList(),
                   onChanged: (v) => setState(() => _vehicleId = v),
@@ -100,7 +100,7 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
                         value: _selectedServiceId,
                         isExpanded: true,
                         decoration: const InputDecoration(border: OutlineInputBorder(), hintText: 'Servicio'),
-                        items: (services.valueOrNull ?? [])
+                        items: (services.value ?? [])
                             .map((s) => DropdownMenuItem(
                                 value: s.id, child: Text('${s.nombre} (${formatCop(s.precio)})')))
                             .toList(),

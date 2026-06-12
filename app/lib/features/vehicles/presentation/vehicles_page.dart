@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'vehicles_providers.dart';
 import 'widgets/vehicle_form_dialog.dart';
 
@@ -30,7 +31,15 @@ class VehiclesPage extends ConsumerWidget {
           ),
           data: (items) {
             if (items.isEmpty) {
-              return const _EmptyView(message: 'Aún no hay vehículos registrados');
+              return EmptyState(
+                icon: Icons.directions_car_outlined,
+                message: 'Aún no hay vehículos registrados',
+                actionLabel: 'Registrar vehículo',
+                onAction: () => showDialog(
+                  context: context,
+                  builder: (_) => const VehicleFormDialog(),
+                ),
+              );
             }
             return ListView.separated(
               itemCount: items.length,
@@ -51,23 +60,6 @@ class VehiclesPage extends ConsumerWidget {
           },
         ),
       ),
-    );
-  }
-}
-
-class _EmptyView extends StatelessWidget {
-  final String message;
-  const _EmptyView({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        const SizedBox(height: 120),
-        Icon(Icons.inbox_outlined, size: 64, color: Colors.grey.shade400),
-        const SizedBox(height: 12),
-        Center(child: Text(message, style: TextStyle(color: Colors.grey.shade600))),
-      ],
     );
   }
 }

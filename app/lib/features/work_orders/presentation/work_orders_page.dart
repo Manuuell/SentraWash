@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/widgets/empty_state.dart';
 import '../domain/work_order.dart';
 import 'work_orders_providers.dart';
 
@@ -24,6 +26,11 @@ class WorkOrdersPage extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: const Text('Órdenes de lavado')),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => context.go('/work-orders/new'),
+        icon: const Icon(Icons.add),
+        label: const Text('Nueva orden'),
+      ),
       body: RefreshIndicator(
         onRefresh: () => ref.read(workOrdersControllerProvider.notifier).refreshList(),
         child: orders.when(
@@ -43,15 +50,12 @@ class WorkOrdersPage extends ConsumerWidget {
           ]),
           data: (items) {
             if (items.isEmpty) {
-              return ListView(children: [
-                const SizedBox(height: 140),
-                Icon(Icons.receipt_long_outlined, size: 64, color: Colors.grey.shade400),
-                const SizedBox(height: 12),
-                Center(
-                  child: Text('No hay órdenes registradas',
-                      style: TextStyle(color: Colors.grey.shade600)),
-                ),
-              ]);
+              return EmptyState(
+                icon: Icons.receipt_long_outlined,
+                message: 'No hay órdenes registradas',
+                actionLabel: 'Crear primera orden',
+                onAction: () => context.go('/work-orders/new'),
+              );
             }
             return ListView.builder(
               padding: const EdgeInsets.all(12),

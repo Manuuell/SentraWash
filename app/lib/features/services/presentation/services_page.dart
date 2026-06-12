@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/utils/format.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'services_providers.dart';
 import 'widgets/service_form_dialog.dart';
 
@@ -25,8 +26,14 @@ class ServicesPage extends ConsumerWidget {
           error: (e, _) => Center(child: Text(e.toString(), textAlign: TextAlign.center)),
           data: (items) {
             if (items.isEmpty) {
-              return Center(
-                child: Text('No hay servicios', style: TextStyle(color: Colors.grey.shade600)),
+              return EmptyState(
+                icon: Icons.local_car_wash_outlined,
+                message: 'Aún no hay servicios configurados',
+                actionLabel: 'Crear servicio',
+                onAction: () => showDialog(
+                  context: context,
+                  builder: (_) => const ServiceFormDialog(),
+                ),
               );
             }
             return ListView.separated(

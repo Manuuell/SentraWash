@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/widgets/empty_state.dart';
 import 'customers_providers.dart';
 import 'widgets/customer_form_dialog.dart';
 
@@ -24,8 +25,14 @@ class CustomersPage extends ConsumerWidget {
           error: (e, _) => Center(child: Text(e.toString(), textAlign: TextAlign.center)),
           data: (items) {
             if (items.isEmpty) {
-              return Center(
-                child: Text('No hay clientes', style: TextStyle(color: Colors.grey.shade600)),
+              return EmptyState(
+                icon: Icons.people_outline,
+                message: 'Aún no hay clientes registrados',
+                actionLabel: 'Agregar cliente',
+                onAction: () => showDialog(
+                  context: context,
+                  builder: (_) => const CustomerFormDialog(),
+                ),
               );
             }
             return ListView.separated(
