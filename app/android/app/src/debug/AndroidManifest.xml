@@ -4,4 +4,8 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Permite HTTP en claro SOLO en builds de debug, porque la API de
+         desarrollo es http:// (emulador: 10.0.2.2, dispositivo: IP de la LAN).
+         Los builds release NO se ven afectados y siguen exigiendo HTTPS. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>
