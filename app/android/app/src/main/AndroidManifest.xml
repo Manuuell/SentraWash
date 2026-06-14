@@ -1,6 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <!-- Necesario para que la app consuma la API (incl. builds release). -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Cámara: escaneo de placa y foto del vehículo para el seguimiento. -->
+    <uses-permission android:name="android.permission.CAMERA"/>
+    <uses-feature android:name="android.hardware.camera" android:required="false"/>
     <application
         android:label="SentraWash"
         android:name="${applicationName}"

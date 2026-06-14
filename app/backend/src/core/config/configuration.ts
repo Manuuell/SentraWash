@@ -41,12 +41,24 @@ export interface WhatsAppConfig {
   phoneNumberId: string;
 }
 
+export interface StorageConfig {
+  /** `true` cuando hay un bucket S3 configurado (habilita la subida de fotos). */
+  enabled: boolean;
+  region: string;
+  bucket: string;
+  /** Claves IAM. Si están vacías se usa la cadena de credenciales por defecto
+   *  de AWS (rol de instancia / variables de entorno). */
+  accessKeyId: string;
+  secretAccessKey: string;
+}
+
 export interface RootConfig {
   app: AppConfig;
   database: DatabaseConfig;
   tenancy: TenancyConfig;
   auth: AuthConfig;
   whatsapp: WhatsAppConfig;
+  storage: StorageConfig;
 }
 
 const toBool = (value: string | undefined, fallback = false): boolean =>
@@ -85,5 +97,14 @@ export default (): RootConfig => ({
     accessToken: process.env.WHATSAPP_ACCESS_TOKEN ?? '',
     graphVersion: process.env.WHATSAPP_GRAPH_VERSION ?? 'v21.0',
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ?? '',
+  },
+  storage: {
+    // Se habilita cuando hay bucket definido. Sin él, la subida de fotos queda
+    // inactiva y las órdenes se crean igual (sin foto).
+    enabled: !!process.env.AWS_S3_BUCKET,
+    region: process.env.AWS_REGION ?? 'us-east-1',
+    bucket: process.env.AWS_S3_BUCKET ?? '',
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
   },
 });

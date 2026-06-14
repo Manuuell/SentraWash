@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../navigation/scaffold_with_nav.dart';
 import '../../features/cash/presentation/cash_page.dart';
 import '../../features/customers/presentation/customers_page.dart';
+import '../../features/dashboard/presentation/board_page.dart';
 import '../../features/dashboard/presentation/dashboard_page.dart';
 import '../../features/services/presentation/services_page.dart';
 import '../../features/vehicles/presentation/vehicles_page.dart';
@@ -20,7 +21,13 @@ final routerProvider = Provider<GoRouter>((ref) {
             ScaffoldWithNav(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(routes: [
-            GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
+            GoRoute(
+              path: '/',
+              builder: (context, state) => const DashboardPage(),
+              routes: [
+                GoRoute(path: 'board', builder: (context, state) => const BoardPage()),
+              ],
+            ),
           ]),
           StatefulShellBranch(routes: [
             GoRoute(path: '/vehicles', builder: (context, state) => const VehiclesPage()),

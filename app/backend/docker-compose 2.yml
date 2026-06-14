@@ -1,0 +1,25 @@
+# Entorno local de desarrollo: PostgreSQL para SentraWash.
+# Levantar con: docker compose up -d
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sentrawash-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sentrawash
+      POSTGRES_PASSWORD: sentrawash
+      POSTGRES_DB: sentrawash
+    ports:
+      - '5432:5432'
+    volumes:
+      - sentrawash_pgdata:/var/lib/postgresql/data
+      # Crea el rol de mínimo privilegio en la primera inicialización.
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U sentrawash -d sentrawash']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sentrawash_pgdata:

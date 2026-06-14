@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/error_retry.dart';
+import '../../../core/widgets/inset_section.dart';
 import 'customers_providers.dart';
 import 'widgets/customer_form_dialog.dart';
 
@@ -10,11 +13,13 @@ class CustomersPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final customers = ref.watch(customersControllerProvider);
+    final theme = Theme.of(context);
+    final faint = theme.colorScheme.onSurface.withValues(alpha: 0.5);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Clientes')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showDialog(context: context, builder: (_) => const CustomerFormDialog()),
+        onPressed: () => showCustomerSheet(context),
         icon: const Icon(Icons.add),
         label: const Text('Nuevo'),
       ),
@@ -22,33 +27,48 @@ class CustomersPage extends ConsumerWidget {
         onRefresh: () => ref.read(customersControllerProvider.notifier).refreshList(),
         child: customers.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text(e.toString(), textAlign: TextAlign.center)),
+          error: (e, _) => ErrorRetry(
+            message: e.toString(),
+            onRetry: () => ref.read(customersControllerProvider.notifier).refreshList(),
+          ),
           data: (items) {
             if (items.isEmpty) {
               return EmptyState(
                 icon: Icons.people_outline,
                 message: 'Aún no hay clientes registrados',
                 actionLabel: 'Agregar cliente',
-                onAction: () => showDialog(
-                  context: context,
-                  builder: (_) => const CustomerFormDialog(),
-                ),
+                onAction: () => showCustomerSheet(context),
               );
             }
-            return ListView.separated(
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (_, i) {
-                final c = items[i];
-                return ListTile(
-                  leading: CircleAvatar(child: Text(c.nombre.isNotEmpty ? c.nombre[0].toUpperCase() : '?')),
-                  title: Text(c.nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text([
-                    if (c.telefono != null) c.telefono!,
-                    if (c.email != null) c.email!,
-                  ].join(' · ')),
-                );
-              },
+            return ListView(
+              padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, MediaQuery.paddingOf(context).bottom + 96),
+              children: [
+                InsetSection(
+                  header: '${items.length} cliente(s)',
+                  children: [
+                    for (final c in items)
+                      ListTile(
+                        leading: CircleAvatar(
+                          backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.14),
+                          foregroundColor: theme.colorScheme.primary,
+                          child: Text(
+                            c.nombre.isNotEmpty ? c.nombre[0].toUpperCase() : '?',
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                        title: Text(c.nombre, style: const TextStyle(fontWeight: FontWeight.w600)),
+                        subtitle: Text(
+                          [
+                            if (c.telefono != null) c.telefono!,
+                            if (c.email != null) c.email!,
+                          ].join(' · '),
+                          style: TextStyle(color: faint),
+                        ),
+                      ),
+                  ],
+                ),
+              ],
             );
           },
         ),

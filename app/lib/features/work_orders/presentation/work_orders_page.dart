@@ -1,23 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/theme/app_spacing.dart';
+import '../../../core/utils/format.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/error_retry.dart';
 import '../domain/work_order.dart';
 import 'wash_stage.dart';
 import 'work_orders_providers.dart';
-
-final _cop = NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
-
-const _estadoColors = {
-  'recibido': Colors.blueGrey,
-  'en_proceso': Colors.blue,
-  'secado': Colors.lightBlue,
-  'listo': Colors.green,
-  'entregado': Colors.teal,
-  'cancelado': Colors.red,
-};
 
 class WorkOrdersPage extends ConsumerWidget {
   const WorkOrdersPage({super.key});
@@ -37,19 +28,10 @@ class WorkOrdersPage extends ConsumerWidget {
         onRefresh: () => ref.read(workOrdersControllerProvider.notifier).refreshList(),
         child: orders.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => ListView(children: [
-            const SizedBox(height: 100),
-            const Icon(Icons.error_outline, size: 56, color: Colors.red),
-            const SizedBox(height: 12),
-            Center(child: Text(e.toString(), textAlign: TextAlign.center)),
-            const SizedBox(height: 12),
-            Center(
-              child: FilledButton(
-                onPressed: () => ref.read(workOrdersControllerProvider.notifier).refreshList(),
-                child: const Text('Reintentar'),
-              ),
-            ),
-          ]),
+          error: (e, _) => ErrorRetry(
+            message: e.toString(),
+            onRetry: () => ref.read(workOrdersControllerProvider.notifier).refreshList(),
+          ),
           data: (items) {
             if (items.isEmpty) {
               return EmptyState(
@@ -60,9 +42,13 @@ class WorkOrdersPage extends ConsumerWidget {
               );
             }
             return ListView.builder(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, MediaQuery.paddingOf(context).bottom + 96),
               itemCount: items.length,
-              itemBuilder: (_, i) => _OrderCard(order: items[i]),
+              itemBuilder: (_, i) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.md),
+                child: _OrderCard(order: items[i]),
+              ),
             );
           },
         ),
@@ -77,34 +63,42 @@ class _OrderCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final color = _estadoColors[order.estado] ?? Colors.grey;
+    final theme = Theme.of(context);
+    final color = estadoColor(order.estado);
+    final faint = theme.colorScheme.onSurface.withValues(alpha: 0.55);
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 10),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(AppSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Text('Orden #${order.numeroOrden}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                 const Spacer(),
-                Chip(
-                  label: Text(estadoLabel(order.estado),
-                      style: const TextStyle(color: Colors.white, fontSize: 12)),
-                  backgroundColor: color,
-                  visualDensity: VisualDensity.compact,
+                // Chip de estado con tinte de color, estilo iOS.
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                  ),
+                  child: Text(
+                    estadoLabel(order.estado),
+                    style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700),
+                  ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            Text('${order.items.length} servicio(s)', style: TextStyle(color: Colors.grey.shade600)),
-            const SizedBox(height: 8),
+            Text('${order.items.length} servicio(s)', style: TextStyle(color: faint)),
+            const SizedBox(height: AppSpacing.md),
             Row(
               children: [
-                Text(_cop.format(order.total),
-                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+                Text(formatCop(order.total),
+                    style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
                 const Spacer(),
                 if (order.nextStatus != null)
                   FilledButton.tonalIcon(
@@ -126,7 +120,7 @@ class _OrderCard extends ConsumerWidget {
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(mapDioError(e).message), backgroundColor: Colors.red),
+          SnackBar(content: Text(mapDioError(e).message), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     }

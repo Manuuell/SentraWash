@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/format.dart';
+import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/error_retry.dart';
+import '../../../core/widgets/inset_section.dart';
 import 'cash_providers.dart';
 import 'widgets/cash_dialogs.dart';
 
@@ -10,6 +14,9 @@ class CashPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final cash = ref.watch(cashControllerProvider);
+    final theme = Theme.of(context);
+    final faint = theme.colorScheme.onSurface.withValues(alpha: 0.55);
+    final bottomClear = MediaQuery.paddingOf(context).bottom + 96;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Caja')),
@@ -17,60 +24,55 @@ class CashPage extends ConsumerWidget {
         onRefresh: () => ref.read(cashControllerProvider.notifier).refresh(),
         child: cash.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text(e.toString(), textAlign: TextAlign.center)),
+          error: (e, _) => ErrorRetry(
+            message: e.toString(),
+            onRetry: () => ref.read(cashControllerProvider.notifier).refresh(),
+          ),
           data: (detail) {
             if (detail == null) {
-              return ListView(
-                children: [
-                  const SizedBox(height: 100),
-                  Icon(Icons.point_of_sale, size: 64, color: Colors.grey.shade400),
-                  const SizedBox(height: 12),
-                  Center(child: Text('No hay caja abierta', style: TextStyle(color: Colors.grey.shade600))),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: FilledButton.icon(
-                      onPressed: () => showDialog(context: context, builder: (_) => const OpenCashDialog()),
-                      icon: const Icon(Icons.lock_open),
-                      label: const Text('Abrir caja'),
-                    ),
-                  ),
-                ],
+              return EmptyState(
+                icon: Icons.point_of_sale_outlined,
+                message: 'No hay caja abierta',
+                actionLabel: 'Abrir caja',
+                actionIcon: Icons.lock_open,
+                onAction: () => showDialog(context: context, builder: (_) => const OpenCashDialog()),
               );
             }
 
             final s = detail.session;
             return ListView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.fromLTRB(AppSpacing.lg, AppSpacing.md, AppSpacing.lg, bottomClear),
               children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Text('Caja abierta',
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                            const Spacer(),
-                            const Chip(
-                              label: Text('abierta', style: TextStyle(color: Colors.white, fontSize: 12)),
-                              backgroundColor: Colors.green,
-                              visualDensity: VisualDensity.compact,
+                AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text('Caja abierta',
+                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                          const Spacer(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: AppColors.green.withValues(alpha: 0.16),
+                              borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
                             ),
-                          ],
-                        ),
-                        const Divider(),
-                        _row('Base inicial', formatCop(s.baseInicial)),
-                        _row('Ingresos', formatCop(s.totalIngresos)),
-                        _row('Egresos', formatCop(s.totalEgresos)),
-                        const Divider(),
-                        _row('Saldo esperado', formatCop(s.saldoEsperado), bold: true),
-                      ],
-                    ),
+                            child: const Text('Abierta',
+                                style: TextStyle(color: AppColors.green, fontSize: 12, fontWeight: FontWeight.w700)),
+                          ),
+                        ],
+                      ),
+                      const Divider(height: AppSpacing.xl),
+                      _row(context, 'Base inicial', formatCop(s.baseInicial)),
+                      _row(context, 'Ingresos', formatCop(s.totalIngresos)),
+                      _row(context, 'Egresos', formatCop(s.totalEgresos)),
+                      const Divider(height: AppSpacing.xl),
+                      _row(context, 'Saldo esperado', formatCop(s.saldoEsperado), bold: true),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: AppSpacing.md),
                 Row(
                   children: [
                     Expanded(
@@ -80,7 +82,7 @@ class CashPage extends ConsumerWidget {
                         label: const Text('Movimiento'),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: AppSpacing.md),
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: () => showDialog(
@@ -93,31 +95,39 @@ class CashPage extends ConsumerWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
-                Text('Movimientos (${detail.movements.length})',
-                    style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 8),
+                const SizedBox(height: AppSpacing.xl),
                 if (detail.movements.isEmpty)
-                  Text('Sin movimientos aún', style: TextStyle(color: Colors.grey.shade600))
+                  Padding(
+                    padding: const EdgeInsets.only(left: AppSpacing.xs),
+                    child: Text('Sin movimientos aún', style: TextStyle(color: faint)),
+                  )
                 else
-                  ...detail.movements.map((m) {
-                    final ingreso = m.tipo == 'ingreso';
-                    return ListTile(
-                      dense: true,
-                      leading: Icon(
-                        ingreso ? Icons.arrow_downward : Icons.arrow_upward,
-                        color: ingreso ? Colors.green : Colors.red,
-                      ),
-                      title: Text(m.concepto),
-                      trailing: Text(
-                        '${ingreso ? '+' : '-'}${formatCop(m.monto)}',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: ingreso ? Colors.green : Colors.red,
-                        ),
-                      ),
-                    );
-                  }),
+                  InsetSection(
+                    header: 'Movimientos (${detail.movements.length})',
+                    children: [
+                      for (final m in detail.movements)
+                        Builder(builder: (context) {
+                          final ingreso = m.tipo == 'ingreso';
+                          final c = ingreso ? AppColors.green : AppColors.red;
+                          return ListTile(
+                            leading: Container(
+                              width: 38,
+                              height: 38,
+                              decoration: BoxDecoration(
+                                color: c.withValues(alpha: 0.14),
+                                borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+                              ),
+                              child: Icon(ingreso ? Icons.arrow_downward : Icons.arrow_upward, color: c, size: 20),
+                            ),
+                            title: Text(m.concepto),
+                            trailing: Text(
+                              '${ingreso ? '+' : '-'}${formatCop(m.monto)}',
+                              style: TextStyle(fontWeight: FontWeight.w700, color: c),
+                            ),
+                          );
+                        }),
+                    ],
+                  ),
               ],
             );
           },
@@ -126,13 +136,18 @@ class CashPage extends ConsumerWidget {
     );
   }
 
-  Widget _row(String label, String value, {bool bold = false}) {
-    final style = TextStyle(fontWeight: bold ? FontWeight.bold : FontWeight.normal, fontSize: bold ? 16 : 14);
+  Widget _row(BuildContext context, String label, String value, {bool bold = false}) {
+    final faint = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6);
+    final style = TextStyle(
+      fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
+      fontSize: bold ? 16 : 14,
+      color: bold ? null : faint,
+    );
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [Text(label, style: style), Text(value, style: style)],
+        children: [Text(label, style: style), Text(value, style: style.copyWith(color: null))],
       ),
     );
   }

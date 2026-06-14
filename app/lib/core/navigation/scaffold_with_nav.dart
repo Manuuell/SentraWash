@@ -1,9 +1,12 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 /// Shell de navegación persistente. En pantallas anchas (≥700px) muestra un
-/// `NavigationRail` lateral; en angostas, una `NavigationBar` inferior. El
-/// contenido de cada sección conserva su estado gracias al `IndexedStack`.
+/// `NavigationRail` lateral; en angostas, una `NavigationBar` inferior con blur
+/// translúcido estilo iOS. El contenido de cada sección conserva su estado
+/// gracias al `IndexedStack`.
 class ScaffoldWithNav extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
   const ScaffoldWithNav({super.key, required this.navigationShell});
@@ -41,19 +44,34 @@ class ScaffoldWithNav extends StatelessWidget {
       );
     }
 
+    final separator = Theme.of(context).dividerColor;
+
     return Scaffold(
+      // El cuerpo se extiende detrás de la barra para que el blur tenga algo
+      // que difuminar (efecto "frosted glass" de iOS).
+      extendBody: true,
       body: navigationShell,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: navigationShell.currentIndex,
-        onDestinationSelected: _go,
-        labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-        destinations: _destinations
-            .map((d) => NavigationDestination(
-                  icon: Icon(d.icon),
-                  selectedIcon: Icon(d.selectedIcon),
-                  label: d.label,
-                ))
-            .toList(),
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(top: BorderSide(color: separator, width: 0.5)),
+            ),
+            child: NavigationBar(
+              selectedIndex: navigationShell.currentIndex,
+              onDestinationSelected: _go,
+              labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+              destinations: _destinations
+                  .map((d) => NavigationDestination(
+                        icon: Icon(d.icon),
+                        selectedIcon: Icon(d.selectedIcon),
+                        label: d.label,
+                      ))
+                  .toList(),
+            ),
+          ),
+        ),
       ),
     );
   }

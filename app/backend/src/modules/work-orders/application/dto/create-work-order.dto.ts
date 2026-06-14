@@ -35,6 +35,12 @@ export class CreateWorkOrderDto {
   @MaxLength(1000)
   observaciones?: string;
 
+  /** Key del objeto en S3 de la foto del vehículo (subida vía URL prefirmada). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  fotoKey?: string;
+
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)

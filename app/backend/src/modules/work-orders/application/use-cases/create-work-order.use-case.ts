@@ -76,6 +76,7 @@ export class CreateWorkOrderUseCase implements UseCase<CreateWorkOrderDto, WorkO
         operarioId: input.operarioId ?? null,
         canalOrigen: input.canalOrigen ?? WorkOrderChannel.MOSTRADOR,
         observaciones: input.observaciones ?? null,
+        fotoKey: input.fotoKey ?? null,
         descuento: input.descuento ?? 0,
         items,
       });

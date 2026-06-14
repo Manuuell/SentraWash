@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/widgets/empty_state.dart';
+import '../../../core/widgets/error_retry.dart';
+import '../../../core/widgets/inset_section.dart';
 import '../../customers/domain/customer.dart';
 import '../../customers/presentation/customers_providers.dart';
+import '../domain/vehicle.dart';
 import 'vehicle_type_meta.dart';
 import 'vehicles_providers.dart';
 import 'widgets/vehicle_form_dialog.dart';
@@ -13,7 +17,6 @@ class VehiclesPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final vehicles = ref.watch(vehiclesControllerProvider);
-    // Mapa id → nombre para mostrar el dueño de cada vehículo.
     final owners = <String, String>{
       for (final c in ref.watch(customersControllerProvider).value ?? const <Customer>[])
         c.id: c.nombre,
@@ -22,10 +25,7 @@ class VehiclesPage extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Vehículos')),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => showDialog(
-          context: context,
-          builder: (_) => const VehicleFormDialog(),
-        ),
+        onPressed: () => showVehicleSheet(context),
         icon: const Icon(Icons.add),
         label: const Text('Nuevo'),
       ),
@@ -33,7 +33,7 @@ class VehiclesPage extends ConsumerWidget {
         onRefresh: () => ref.read(vehiclesControllerProvider.notifier).refreshList(),
         child: vehicles.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => _ErrorView(
+          error: (e, _) => ErrorRetry(
             message: e.toString(),
             onRetry: () => ref.read(vehiclesControllerProvider.notifier).refreshList(),
           ),
@@ -43,39 +43,24 @@ class VehiclesPage extends ConsumerWidget {
                 icon: Icons.directions_car_outlined,
                 message: 'Aún no hay vehículos registrados',
                 actionLabel: 'Registrar vehículo',
-                onAction: () => showDialog(
-                  context: context,
-                  builder: (_) => const VehicleFormDialog(),
-                ),
+                onAction: () => showVehicleSheet(context),
               );
             }
-            return ListView.separated(
-              itemCount: items.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
-              itemBuilder: (_, i) {
-                final v = items[i];
-                final owner = v.customerId != null ? owners[v.customerId] : null;
-                return ListTile(
-                  leading: CircleAvatar(child: Icon(vehicleTypeIcon(v.tipo))),
-                  title: Text(v.placa, style: const TextStyle(fontWeight: FontWeight.bold)),
-                  subtitle: Text([
-                    vehicleTypeLabel(v.tipo),
-                    if (v.marca != null) v.marca!,
-                    if (v.color != null) v.color!,
-                  ].join(' · ')),
-                  trailing: owner != null
-                      ? Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.person, size: 16, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(owner, style: TextStyle(color: Colors.grey.shade700)),
-                          ],
-                        )
-                      : Text('Sin cliente',
-                          style: TextStyle(color: Colors.grey.shade400, fontSize: 12)),
-                );
-              },
+            return ListView(
+              padding: EdgeInsets.fromLTRB(
+                  AppSpacing.lg, AppSpacing.md, AppSpacing.lg, MediaQuery.paddingOf(context).bottom + 96),
+              children: [
+                InsetSection(
+                  header: '${items.length} vehículo(s)',
+                  children: [
+                    for (final v in items)
+                      _VehicleTile(
+                        vehicle: v,
+                        owner: v.customerId != null ? owners[v.customerId] : null,
+                      ),
+                  ],
+                ),
+              ],
             );
           },
         ),
@@ -84,22 +69,46 @@ class VehiclesPage extends ConsumerWidget {
   }
 }
 
-class _ErrorView extends StatelessWidget {
-  final String message;
-  final VoidCallback onRetry;
-  const _ErrorView({required this.message, required this.onRetry});
+class _VehicleTile extends StatelessWidget {
+  final Vehicle vehicle;
+  final String? owner;
+  const _VehicleTile({required this.vehicle, required this.owner});
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        const SizedBox(height: 100),
-        const Icon(Icons.error_outline, size: 56, color: Colors.red),
-        const SizedBox(height: 12),
-        Center(child: Text(message, textAlign: TextAlign.center)),
-        const SizedBox(height: 12),
-        Center(child: FilledButton(onPressed: onRetry, child: const Text('Reintentar'))),
-      ],
+    final theme = Theme.of(context);
+    final faint = theme.colorScheme.onSurface.withValues(alpha: 0.5);
+    final v = vehicle;
+
+    return ListTile(
+      leading: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        ),
+        child: Icon(vehicleTypeIcon(v.tipo), color: theme.colorScheme.primary, size: 22),
+      ),
+      title: Text(v.placa, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+      subtitle: Text(
+        [
+          vehicleTypeLabel(v.tipo),
+          if (v.marca != null) v.marca!,
+          if (v.color != null) v.color!,
+        ].join(' · '),
+        style: TextStyle(color: faint),
+      ),
+      trailing: owner != null
+          ? Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.person, size: 15, color: faint),
+                const SizedBox(width: 4),
+                Text(owner!, style: TextStyle(color: faint, fontSize: 13)),
+              ],
+            )
+          : null,
     );
   }
 }

@@ -1,19 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/error/failure.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_sheet.dart';
+import '../vehicle_type_meta.dart';
 import '../vehicles_providers.dart';
 
 const _tipos = ['automovil', 'camioneta', 'moto', 'taxi', 'camion', 'otro'];
 
-/// Diálogo para registrar un vehículo nuevo.
-class VehicleFormDialog extends ConsumerStatefulWidget {
-  const VehicleFormDialog({super.key});
+/// Abre el formulario de alta de vehículo como bottom sheet estilo iOS.
+Future<void> showVehicleSheet(BuildContext context) => showAppSheet<void>(
+      context: context,
+      title: 'Nuevo vehículo',
+      builder: (_) => const VehicleForm(),
+    );
+
+/// Formulario para registrar un vehículo nuevo (cuerpo de la hoja).
+class VehicleForm extends ConsumerStatefulWidget {
+  const VehicleForm({super.key});
 
   @override
-  ConsumerState<VehicleFormDialog> createState() => _VehicleFormDialogState();
+  ConsumerState<VehicleForm> createState() => _VehicleFormState();
 }
 
-class _VehicleFormDialogState extends ConsumerState<VehicleFormDialog> {
+class _VehicleFormState extends ConsumerState<VehicleForm> {
   final _formKey = GlobalKey<FormState>();
   final _placa = TextEditingController();
   final _marca = TextEditingController();
@@ -39,12 +49,12 @@ class _VehicleFormDialogState extends ConsumerState<VehicleFormDialog> {
             marca: _marca.text.trim(),
             color: _color.text.trim(),
           );
-      if (mounted) Navigator.of(context).pop(true);
+      if (mounted) Navigator.of(context).pop();
     } catch (e) {
       if (mounted) {
         setState(() => _saving = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(mapDioError(e).message), backgroundColor: Colors.red),
+          SnackBar(content: Text(mapDioError(e).message), backgroundColor: Theme.of(context).colorScheme.error),
         );
       }
     }
@@ -52,53 +62,55 @@ class _VehicleFormDialogState extends ConsumerState<VehicleFormDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Nuevo vehículo'),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _placa,
-              textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(labelText: 'Placa', hintText: 'ABC123'),
-              validator: (v) => (v == null || v.trim().length < 5) ? 'Placa inválida' : null,
-            ),
-            const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: _tipo,
-              decoration: const InputDecoration(labelText: 'Tipo'),
-              items: _tipos
-                  .map((t) => DropdownMenuItem(value: t, child: Text(t)))
-                  .toList(),
-              onChanged: (v) => setState(() => _tipo = v ?? _tipo),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _marca,
-              decoration: const InputDecoration(labelText: 'Marca (opcional)'),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              controller: _color,
-              decoration: const InputDecoration(labelText: 'Color (opcional)'),
-            ),
-          ],
-        ),
+    return Form(
+      key: _formKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextFormField(
+            controller: _placa,
+            textCapitalization: TextCapitalization.characters,
+            decoration: const InputDecoration(labelText: 'Placa', hintText: 'ABC123'),
+            validator: (v) => (v == null || v.trim().length < 5) ? 'Placa inválida' : null,
+          ),
+          const SizedBox(height: AppSpacing.md),
+          // Tipo de vehículo como chips seleccionables (más táctil que un dropdown).
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Text('Tipo', style: Theme.of(context).textTheme.labelLarge),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: [
+              for (final t in _tipos)
+                ChoiceChip(
+                  label: Text(vehicleTypeLabel(t)),
+                  selected: _tipo == t,
+                  onSelected: (_) => setState(() => _tipo = t),
+                ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.lg),
+          TextFormField(
+            controller: _marca,
+            decoration: const InputDecoration(labelText: 'Marca (opcional)'),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          TextFormField(
+            controller: _color,
+            decoration: const InputDecoration(labelText: 'Color (opcional)'),
+          ),
+          const SizedBox(height: AppSpacing.xl),
+          FilledButton(
+            onPressed: _saving ? null : _submit,
+            child: _saving
+                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2.4))
+                : const Text('Guardar vehículo'),
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: _saving ? null : () => Navigator.of(context).pop(false),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: _saving ? null : _submit,
-          child: _saving
-              ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
-              : const Text('Guardar'),
-        ),
-      ],
     );
   }
 }

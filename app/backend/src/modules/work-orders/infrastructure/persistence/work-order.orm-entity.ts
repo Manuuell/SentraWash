@@ -31,6 +31,9 @@ export class WorkOrderOrmEntity extends TenantAwareEntity {
   @Column({ type: 'text', nullable: true })
   observaciones!: string | null;
 
+  @Column({ name: 'foto_key', type: 'varchar', length: 500, nullable: true })
+  fotoKey!: string | null;
+
   @Column({ type: 'numeric', precision: 12, scale: 2 })
   subtotal!: string;
 

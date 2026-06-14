@@ -13,6 +13,7 @@ export interface WorkOrderProps {
   estado: WorkOrderStatus;
   canalOrigen: WorkOrderChannel;
   observaciones: string | null;
+  fotoKey: string | null;
   items: WorkOrderItemProps[];
   subtotal: number;
   descuento: number;
@@ -38,6 +39,7 @@ export interface NewWorkOrder {
   operarioId: string | null;
   canalOrigen: WorkOrderChannel;
   observaciones: string | null;
+  fotoKey: string | null;
   descuento: number;
   items: NewWorkOrderItem[];
 }
@@ -95,6 +97,7 @@ export class WorkOrder {
       estado: WorkOrderStatus.RECIBIDO,
       canalOrigen: input.canalOrigen ?? WorkOrderChannel.MOSTRADOR,
       observaciones: input.observaciones ?? null,
+      fotoKey: input.fotoKey ?? null,
       items,
       subtotal,
       descuento,

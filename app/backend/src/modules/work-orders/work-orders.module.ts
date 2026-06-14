@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { StorageModule } from '../../core/storage/storage.module';
 import { VehiclesModule } from '../vehicles/vehicles.module';
 import { ServicesModule } from '../services/services.module';
 import { WORK_ORDER_REPOSITORY } from './domain/work-order.repository';
@@ -19,6 +20,8 @@ import { WorkOrdersController } from './presentation/work-orders.controller';
     // Para inyectar los puertos de vehículos y servicios (precio del catálogo).
     VehiclesModule,
     ServicesModule,
+    // Para firmar URLs de lectura de las fotos en las respuestas.
+    StorageModule,
   ],
   controllers: [WorkOrdersController],
   providers: [

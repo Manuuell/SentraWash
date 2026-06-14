@@ -8,6 +8,7 @@ import { JwtAuthGuard } from './core/auth/jwt-auth.guard';
 import { RolesGuard } from './core/auth/roles.guard';
 import { DomainExceptionFilter } from './core/common/filters/domain-exception.filter';
 import { DatabaseModule } from './core/database/database.module';
+import { StorageModule } from './core/storage/storage.module';
 import { TenancyModule } from './core/tenancy/tenancy.module';
 import { TenantTransactionInterceptor } from './core/tenancy/tenant-transaction.interceptor';
 import { HealthController } from './health/health.controller';
@@ -27,6 +28,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     DatabaseModule,
     AuthModule,
     TenancyModule,
+    StorageModule,
     VehiclesModule,
     CustomersModule,
     ServicesModule,

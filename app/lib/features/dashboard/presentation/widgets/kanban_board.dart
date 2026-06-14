@@ -50,9 +50,10 @@ class KanbanBoard extends StatelessWidget {
           );
         }
 
-        // Móvil: columnas apiladas en un solo scroll vertical.
+        // Móvil: columnas apiladas en un solo scroll vertical. El padding
+        // inferior libera la barra de navegación translúcida (extendBody).
         return ListView(
-          padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
+          padding: EdgeInsets.fromLTRB(12, 0, 12, MediaQuery.paddingOf(context).bottom + 84),
           children: [
             for (final s in kanbanStages)
               Padding(

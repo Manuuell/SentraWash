@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/error/failure.dart';
+import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/format.dart';
 import '../../../core/widgets/primary_action_button.dart';
 import '../../customers/domain/customer.dart';
@@ -32,7 +35,14 @@ const _tipoOptions = <_TipoOption>[
 ];
 
 class CreateOrderPage extends ConsumerStatefulWidget {
-  const CreateOrderPage({super.key});
+  /// Placa detectada por el escáner (OCR). Si viene, prellena y autocompleta.
+  final String? initialPlaca;
+
+  /// Ruta de la foto del vehículo capturada en el escáner. Se muestra como
+  /// evidencia; su subida al backend llega en la Fase 3 (S3).
+  final String? photoPath;
+
+  const CreateOrderPage({super.key, this.initialPlaca, this.photoPath});
 
   @override
   ConsumerState<CreateOrderPage> createState() => _CreateOrderPageState();
@@ -57,6 +67,18 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
 
   double get _total => _items.fold(0, (sum, i) => sum + i.subtotal);
   bool get _isNew => _matched == null;
+
+  @override
+  void initState() {
+    super.initState();
+    // Prefill desde el escáner: pone la placa y dispara el autocompletado una vez
+    // que las listas (vehículos/clientes) estén disponibles tras el primer frame.
+    final placa = widget.initialPlaca;
+    if (placa != null && placa.trim().isNotEmpty) {
+      _placa.text = placa.trim().toUpperCase();
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onPlacaChanged(_placa.text));
+    }
+  }
 
   @override
   void dispose() {
@@ -236,8 +258,14 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Registrar ingreso')),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.paddingOf(context).bottom + 96),
         children: [
+          // ── Foto del vehículo (capturada en el escáner) ──
+          if (widget.photoPath != null) ...[
+            _PhotoPreview(path: widget.photoPath!),
+            const SizedBox(height: 20),
+          ],
+
           // ── Placa (autocompletado) ──
           Text('Placa', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
@@ -586,6 +614,40 @@ class _QtyStepper extends StatelessWidget {
           onPressed: () => onChanged(value + 1),
           icon: const Icon(Icons.add),
           visualDensity: VisualDensity.compact,
+        ),
+      ],
+    );
+  }
+}
+
+/// Miniatura de la foto del vehículo capturada en el escáner. Marca que la foto
+/// quedará lista para subir (la persistencia en S3 llega en la Fase 3).
+class _PhotoPreview extends StatelessWidget {
+  final String path;
+  const _PhotoPreview({required this.path});
+
+  @override
+  Widget build(BuildContext context) {
+    final faint = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.55);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+          child: Image.file(
+            File(path),
+            height: 200,
+            width: double.infinity,
+            fit: BoxFit.cover,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.sm),
+        Row(
+          children: [
+            Icon(Icons.photo_camera, size: 15, color: faint),
+            const SizedBox(width: 6),
+            Text('Foto del vehículo capturada', style: TextStyle(color: faint, fontSize: 13)),
+          ],
         ),
       ],
     );

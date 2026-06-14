@@ -24,7 +24,9 @@ android {
         applicationId = "com.sentrawash.sentrawash_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // ML Kit (reconocimiento de texto) y el plugin de cámara requieren ≥21;
+        // 24 evita conflictos de minSdk entre plugins.
+        minSdk = maxOf(24, flutter.minSdkVersion)
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
