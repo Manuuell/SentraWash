@@ -1,16 +1,19 @@
 /// Configuración de la app. Sobrescribible en compilación con --dart-define.
 class AppConfig {
-  /// Base de la API. En web/desktop dev: localhost. En emulador Android usa
-  /// 10.0.2.2 (ej: flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4000/api/v1).
+  /// Base de la API. Por defecto apunta al backend de producción en el VPS, así
+  /// `flutter run` (sin flags) ya consume el backend real. Para apuntar a un
+  /// backend local pasa, por ejemplo:
+  ///   flutter run --dart-define=API_BASE_URL=http://10.0.2.2:4000/api/v1
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://localhost:4000/api/v1',
+    defaultValue: 'https://sentrawash.duckdns.org/api/v1',
   );
 
-  /// Tenant por defecto en desarrollo (cuando AUTH_ENABLED=false en el backend,
-  /// el tenant viaja por header). En producción se obtiene del JWT de Cognito.
+  /// Tenant por defecto (lavadero demo sembrado en el VPS). Mientras
+  /// AUTH_ENABLED=false el tenant viaja por header; con Cognito vendrá del JWT.
+  /// Sobrescribible con --dart-define=TENANT_ID=...
   static const String defaultTenantId = String.fromEnvironment(
     'TENANT_ID',
-    defaultValue: 'ef5c9f7e-f6d8-48d0-84b3-d1dd7d99c1a5',
+    defaultValue: '90d5bd4d-3e4c-4540-9935-7cd7e7adc885',
   );
 }
