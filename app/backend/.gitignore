@@ -12,6 +12,8 @@
 # Env
 .env
 .env.*.local
+.env.prod
+!.env.prod.example
 
 # Logs
 *.log

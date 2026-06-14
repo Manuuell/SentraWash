@@ -1,0 +1,53 @@
+# Despliegue de producción de SentraWash (Postgres + NestJS) para el VPS.
+#
+# Diseñado para convivir con otros proyectos en el mismo servidor:
+#   - Postgres NO se publica al host (vive solo en la red interna de Docker),
+#     así no choca con el Postgres del host que ya usa el 5432.
+#   - La API se publica SOLO en 127.0.0.1:4000 (no 0.0.0.0): no queda expuesta
+#     directamente a internet; el nginx del host la proxea con HTTPS.
+#
+# Levantar:  docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+# Logs:      docker compose --env-file .env.prod -f docker-compose.prod.yml logs -f api
+# Apagar:    docker compose --env-file .env.prod -f docker-compose.prod.yml down
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sentrawash-prod-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_ADMIN_USERNAME}
+      POSTGRES_PASSWORD: ${DB_ADMIN_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - sentrawash_prod_pgdata:/var/lib/postgresql/data
+      # Crea el rol de mínimo privilegio en la primera inicialización.
+      - ./docker/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${DB_ADMIN_USERNAME} -d ${DB_NAME}']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Sin `ports`: la base de datos NO es accesible desde fuera de la red Docker.
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sentrawash-prod-api
+    restart: unless-stopped
+    env_file: .env.prod
+    environment:
+      # Dentro de la red de Compose el host de la DB es el nombre del servicio.
+      DB_HOST: db
+      DB_PORT: '5432'
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      # Solo localhost del host -> nginx hace el proxy hacia aquí.
+      - '127.0.0.1:4000:3000'
+    # Corre migraciones (con el rol admin) y luego arranca la API.
+    command: sh -c "npx typeorm migration:run -d dist/core/database/data-source.js && node dist/main.js"
+
+volumes:
+  sentrawash_prod_pgdata:

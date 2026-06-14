@@ -1,0 +1,35 @@
+name: Deploy backend al VPS
+
+# Se dispara al hacer push a main que toque el backend (o manualmente desde
+# la pestaña Actions). El primer despliegue es manual (ver app/backend/deploy/
+# DEPLOY.md); este workflow solo actualiza una instalación ya existente.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'app/backend/**'
+      - '.github/workflows/deploy-backend.yml'
+  workflow_dispatch:
+
+# Evita despliegues solapados si llegan varios push seguidos.
+concurrency:
+  group: deploy-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Actualizar y reconstruir en el VPS (SSH)
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          script: |
+            set -e
+            cd ~/SentraWash
+            git pull origin main
+            cd app/backend
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+            docker image prune -f
