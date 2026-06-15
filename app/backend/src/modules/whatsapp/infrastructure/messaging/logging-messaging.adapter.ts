@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { MessagingPort } from '../../domain/messaging.port';
+import { MessagingPort, WhatsAppTemplate } from '../../domain/messaging.port';
 
 /**
  * Adaptador de desarrollo: SIMULA el envío escribiendo en el log. Se usa cuando
@@ -11,5 +11,11 @@ export class LoggingMessagingAdapter implements MessagingPort {
 
   async sendText(to: string, body: string): Promise<void> {
     this.logger.log(`[WA SIMULADO] -> ${to}: ${body.replace(/\n/g, ' ⏎ ')}`);
+  }
+
+  async sendTemplate(to: string, template: WhatsAppTemplate): Promise<void> {
+    this.logger.log(
+      `[WA SIMULADO template] -> ${to}: ${template.name}(${template.bodyParams.join(', ')})`,
+    );
   }
 }

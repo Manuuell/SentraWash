@@ -39,6 +39,10 @@ export interface WhatsAppConfig {
   graphVersion: string;
   /** Número por defecto para envíos (fallback si no se resuelve el del tenant). */
   phoneNumberId: string;
+  /** Nombre del template aprobado para la notificación "vehículo listo". */
+  readyTemplate: string;
+  /** Código de idioma del template (debe coincidir con el creado en Meta). */
+  templateLanguage: string;
 }
 
 export interface StorageConfig {
@@ -97,6 +101,8 @@ export default (): RootConfig => ({
     accessToken: process.env.WHATSAPP_ACCESS_TOKEN ?? '',
     graphVersion: process.env.WHATSAPP_GRAPH_VERSION ?? 'v21.0',
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ?? '',
+    readyTemplate: process.env.WHATSAPP_TEMPLATE_READY ?? 'vehiculo_listo',
+    templateLanguage: process.env.WHATSAPP_TEMPLATE_LANG ?? 'es',
   },
   storage: {
     // Se habilita cuando hay bucket definido. Sin él, la subida de fotos queda

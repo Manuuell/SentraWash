@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { WhatsAppConfig } from '../../../../core/config/configuration';
-import { MessagingPort } from '../../domain/messaging.port';
+import { MessagingPort, WhatsAppTemplate } from '../../domain/messaging.port';
 
 /**
  * Adaptador oficial de Meta WhatsApp Cloud API (basado en el MetaCloudAdapter de
@@ -14,6 +14,32 @@ export class MetaCloudAdapter implements MessagingPort {
   constructor(private readonly config: ConfigService) {}
 
   async sendText(to: string, body: string, phoneNumberId?: string): Promise<void> {
+    await this.post(phoneNumberId, { to, type: 'text', text: { body, preview_url: false } });
+  }
+
+  async sendTemplate(to: string, template: WhatsAppTemplate, phoneNumberId?: string): Promise<void> {
+    const components =
+      template.bodyParams.length > 0
+        ? [
+            {
+              type: 'body',
+              parameters: template.bodyParams.map((text) => ({ type: 'text', text })),
+            },
+          ]
+        : [];
+    await this.post(phoneNumberId, {
+      to,
+      type: 'template',
+      template: {
+        name: template.name,
+        language: { code: template.language },
+        components,
+      },
+    });
+  }
+
+  /** POST a la Graph API con el número emisor resuelto y manejo de error común. */
+  private async post(phoneNumberId: string | undefined, message: Record<string, unknown>): Promise<void> {
     const cfg = this.config.get<WhatsAppConfig>('whatsapp')!;
     const pnid = phoneNumberId ?? cfg.phoneNumberId;
     if (!pnid) {
@@ -27,12 +53,7 @@ export class MetaCloudAdapter implements MessagingPort {
         Authorization: `Bearer ${cfg.accessToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        messaging_product: 'whatsapp',
-        to,
-        type: 'text',
-        text: { body, preview_url: false },
-      }),
+      body: JSON.stringify({ messaging_product: 'whatsapp', ...message }),
     });
 
     if (!res.ok) {

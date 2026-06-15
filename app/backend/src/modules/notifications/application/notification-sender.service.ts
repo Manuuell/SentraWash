@@ -1,6 +1,10 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { TenantManager } from '../../../core/tenancy/tenant-manager.service';
-import { MESSAGING_PORT, MessagingPort } from '../../whatsapp/domain/messaging.port';
+import {
+  MESSAGING_PORT,
+  MessagingPort,
+  WhatsAppTemplate,
+} from '../../whatsapp/domain/messaging.port';
 import {
   WA_BUSINESS_ACCOUNT_REPOSITORY,
   WaBusinessAccountRepository,
@@ -28,19 +32,36 @@ export class NotificationSender {
     const payload = notification.payload;
     const telefono = typeof payload['telefono'] === 'string' ? payload['telefono'] : null;
     const mensaje = typeof payload['mensaje'] === 'string' ? payload['mensaje'] : null;
+    const template = this.asTemplate(payload['template']);
 
-    if (!telefono || !mensaje) {
+    if (!telefono || (!template && !mensaje)) {
       notification.markFailed();
       return this.notifications.save(notification);
     }
 
     const account = await this.accounts.findByTenant(this.tenant.tenantId);
     try {
-      await this.messaging.sendText(telefono, mensaje, account?.phoneNumberId);
+      // Notificación proactiva → template; si no hay template, texto libre.
+      if (template) {
+        await this.messaging.sendTemplate(telefono, template, account?.phoneNumberId);
+      } else {
+        await this.messaging.sendText(telefono, mensaje!, account?.phoneNumberId);
+      }
       notification.markSent();
     } catch {
       notification.markFailed();
     }
     return this.notifications.save(notification);
+  }
+
+  /** Valida que el payload traiga un template bien formado. */
+  private asTemplate(raw: unknown): WhatsAppTemplate | null {
+    if (raw && typeof raw === 'object') {
+      const t = raw as Record<string, unknown>;
+      if (typeof t['name'] === 'string' && typeof t['language'] === 'string' && Array.isArray(t['bodyParams'])) {
+        return { name: t['name'], language: t['language'], bodyParams: t['bodyParams'].map(String) };
+      }
+    }
+    return null;
   }
 }
