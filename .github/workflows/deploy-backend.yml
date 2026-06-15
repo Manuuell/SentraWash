@@ -31,5 +31,7 @@ jobs:
             cd ~/SentraWash
             git pull origin main
             cd app/backend
-            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
+            # --force-recreate asegura que los cambios en .env.prod (p. ej. claves
+            # AWS) se apliquen siempre; docker compose no los relee con solo --build.
+            docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build --force-recreate
             docker image prune -f
