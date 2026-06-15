@@ -45,11 +45,13 @@ class WorkOrdersController extends AsyncNotifier<List<WorkOrder>> {
     required String vehicleId,
     String? customerId,
     required List<OrderItemInput> items,
+    String? fotoKey,
   }) async {
     await ref.read(workOrderRepositoryProvider).create(
           vehicleId: vehicleId,
           customerId: customerId,
           items: items,
+          fotoKey: fotoKey,
         );
     await refreshList();
   }

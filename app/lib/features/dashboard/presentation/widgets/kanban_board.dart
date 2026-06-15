@@ -211,6 +211,20 @@ class _OrderKanbanCard extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Foto del vehículo (si se capturó al ingreso).
+            if (order.fotoUrl != null) ...[
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  order.fotoUrl!,
+                  height: 96,
+                  width: double.infinity,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+              const SizedBox(height: 8),
+            ],
             Row(
               children: [
                 Text(placa, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),

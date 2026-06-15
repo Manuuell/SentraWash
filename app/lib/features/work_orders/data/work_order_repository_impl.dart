@@ -20,10 +20,12 @@ class WorkOrderRepositoryImpl implements WorkOrderRepository {
     required String vehicleId,
     String? customerId,
     required List<OrderItemInput> items,
+    String? fotoKey,
   }) {
     return remote.create({
       'vehicleId': vehicleId,
       if (customerId != null) 'customerId': customerId,
+      if (fotoKey != null) 'fotoKey': fotoKey,
       'items': items
           .map((i) => {'serviceId': i.serviceId, 'cantidad': i.cantidad})
           .toList(),

@@ -9,6 +9,7 @@ class WorkOrderModel {
         descuento: (json['descuento'] as num).toDouble(),
         total: (json['total'] as num).toDouble(),
         vehicleId: json['vehicleId'] as String?,
+        fotoUrl: json['fotoUrl'] as String?,
         fechaIngreso:
             DateTime.tryParse(json['fechaIngreso']?.toString() ?? '')?.toLocal() ??
                 DateTime.now(),

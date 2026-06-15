@@ -8,6 +8,7 @@ import '../../../core/error/failure.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/format.dart';
 import '../../../core/widgets/primary_action_button.dart';
+import '../../intake/data/photo_uploader.dart';
 import '../../customers/domain/customer.dart';
 import '../../customers/presentation/customers_providers.dart';
 import '../../services/presentation/services_providers.dart';
@@ -224,11 +225,19 @@ class _CreateOrderPageState extends ConsumerState<CreateOrderPage> {
         await ref.read(vehiclesControllerProvider.notifier).refreshList();
       }
 
-      // 3) Crea la orden de lavado, enlazada al vehículo y al cliente.
+      // 3) Sube la foto a S3 (si hay) y obtiene su key. Si falla, la orden se
+      //    crea igual sin foto (no bloquea el registro del ingreso).
+      String? fotoKey;
+      if (widget.photoPath != null) {
+        fotoKey = await ref.read(photoUploaderProvider).upload(widget.photoPath!);
+      }
+
+      // 4) Crea la orden de lavado, enlazada al vehículo, al cliente y la foto.
       await ref.read(workOrdersControllerProvider.notifier).create(
             vehicleId: vehicleId,
             customerId: customerId,
             items: _items,
+            fotoKey: fotoKey,
           );
 
       if (mounted) {

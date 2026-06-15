@@ -8,5 +8,6 @@ abstract class WorkOrderRepository {
     required String vehicleId,
     String? customerId,
     required List<OrderItemInput> items,
+    String? fotoKey,
   });
 }

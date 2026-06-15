@@ -25,6 +25,9 @@ class WorkOrder {
   final String? vehicleId;
   final DateTime fechaIngreso;
 
+  /// URL prefirmada (temporal) de la foto del vehículo, o null si no tiene.
+  final String? fotoUrl;
+
   const WorkOrder({
     required this.id,
     required this.numeroOrden,
@@ -35,6 +38,7 @@ class WorkOrder {
     required this.items,
     required this.fechaIngreso,
     this.vehicleId,
+    this.fotoUrl,
   });
 
   /// Próximo estado en el flujo, o null si es terminal.
@@ -58,5 +62,6 @@ class WorkOrder {
         items: items,
         fechaIngreso: fechaIngreso,
         vehicleId: vehicleId,
+        fotoUrl: fotoUrl,
       );
 }

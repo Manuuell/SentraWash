@@ -15,6 +15,7 @@ export class WorkOrderMapper {
       estado: order.estado,
       canalOrigen: order.canalOrigen,
       observaciones: order.observaciones ?? null,
+      fotoKey: order.fotoKey ?? null,
       items: items.map((i) => ({
         id: i.id,
         serviceId: i.serviceId ?? null,
@@ -46,6 +47,7 @@ export class WorkOrderMapper {
     o.estado = p.estado;
     o.canalOrigen = p.canalOrigen;
     o.observaciones = p.observaciones;
+    o.fotoKey = p.fotoKey;
     o.subtotal = p.subtotal.toFixed(2);
     o.descuento = p.descuento.toFixed(2);
     o.total = p.total.toFixed(2);

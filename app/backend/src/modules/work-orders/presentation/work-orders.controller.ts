@@ -10,6 +10,8 @@ import {
   Post,
 } from '@nestjs/common';
 import { unwrap } from '../../../core/common/unwrap';
+import { StorageService } from '../../../core/storage/storage.service';
+import { WorkOrder } from '../domain/work-order';
 import { ChangeStatusDto } from '../application/dto/change-status.dto';
 import { CreateWorkOrderDto } from '../application/dto/create-work-order.dto';
 import { ChangeWorkOrderStatusUseCase } from '../application/use-cases/change-work-order-status.use-case';
@@ -27,21 +29,29 @@ export class WorkOrdersController {
     private readonly getWorkOrder: GetWorkOrderUseCase,
     private readonly changeStatus: ChangeWorkOrderStatusUseCase,
     private readonly deleteWorkOrder: DeleteWorkOrderUseCase,
+    private readonly storage: StorageService,
   ) {}
+
+  /** Construye la respuesta firmando una URL temporal para la foto (si la hay). */
+  private async toResponse(order: WorkOrder): Promise<WorkOrderResponse> {
+    const fotoUrl = await this.storage.presignDownload(order.toPrimitives().fotoKey);
+    return WorkOrderResponse.from(order, fotoUrl);
+  }
 
   @Post()
   async create(@Body() dto: CreateWorkOrderDto): Promise<WorkOrderResponse> {
-    return WorkOrderResponse.from(unwrap(await this.createWorkOrder.execute(dto)));
+    return this.toResponse(unwrap(await this.createWorkOrder.execute(dto)));
   }
 
   @Get()
   async list(): Promise<WorkOrderResponse[]> {
-    return unwrap(await this.listWorkOrders.execute()).map(WorkOrderResponse.from);
+    const orders = unwrap(await this.listWorkOrders.execute());
+    return Promise.all(orders.map((o) => this.toResponse(o)));
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<WorkOrderResponse> {
-    return WorkOrderResponse.from(unwrap(await this.getWorkOrder.execute(id)));
+    return this.toResponse(unwrap(await this.getWorkOrder.execute(id)));
   }
 
   @Patch(':id/status')
@@ -49,9 +59,7 @@ export class WorkOrdersController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ChangeStatusDto,
   ): Promise<WorkOrderResponse> {
-    return WorkOrderResponse.from(
-      unwrap(await this.changeStatus.execute({ id, estado: dto.estado })),
-    );
+    return this.toResponse(unwrap(await this.changeStatus.execute({ id, estado: dto.estado })));
   }
 
   @Delete(':id')

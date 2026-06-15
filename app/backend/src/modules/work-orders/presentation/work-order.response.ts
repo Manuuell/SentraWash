@@ -18,6 +18,10 @@ export class WorkOrderResponse {
   estado!: string;
   canalOrigen!: string;
   observaciones!: string | null;
+  /** Key del objeto en S3 (referencia interna). */
+  fotoKey!: string | null;
+  /** URL prefirmada (temporal) para mostrar la foto; `null` si no hay foto. */
+  fotoUrl!: string | null;
   items!: WorkOrderItemView[];
   subtotal!: number;
   descuento!: number;
@@ -28,7 +32,8 @@ export class WorkOrderResponse {
   createdAt!: Date;
   updatedAt!: Date;
 
-  static from(order: WorkOrder): WorkOrderResponse {
+  /** [fotoUrl] es la URL prefirmada de lectura, ya resuelta por el controlador. */
+  static from(order: WorkOrder, fotoUrl: string | null = null): WorkOrderResponse {
     const p = order.toPrimitives();
     return {
       id: p.id,
@@ -39,6 +44,8 @@ export class WorkOrderResponse {
       estado: p.estado,
       canalOrigen: p.canalOrigen,
       observaciones: p.observaciones,
+      fotoKey: p.fotoKey,
+      fotoUrl,
       items: p.items.map((i) => ({
         id: i.id,
         serviceId: i.serviceId,

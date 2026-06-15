@@ -1,0 +1,12 @@
+# Credenciales y secretos — NUNCA deben subirse al repo (público).
+*accessKeys*.csv
+*credentials*.csv
+*.pem
+*.key
+.env
+.env.*
+!.env.*.example
+
+# Archivos del IDE / OS
+.idea/
+.DS_Store

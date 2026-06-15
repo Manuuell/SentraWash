@@ -39,7 +39,7 @@ export interface NewWorkOrder {
   operarioId: string | null;
   canalOrigen: WorkOrderChannel;
   observaciones: string | null;
-  fotoKey: string | null;
+  fotoKey?: string | null;
   descuento: number;
   items: NewWorkOrderItem[];
 }
