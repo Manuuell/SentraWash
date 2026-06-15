@@ -16,4 +16,23 @@ class AppConfig {
     'TENANT_ID',
     defaultValue: '90d5bd4d-3e4c-4540-9935-7cd7e7adc885',
   );
+
+  // ── Cognito (autenticación) ──
+  // Mientras estos estén vacíos, la app NO exige login y usa el tenant por
+  // defecto (comportamiento actual). Al definir el User Pool y el Client, el
+  // login se activa solo. Pasar en compilación:
+  //   --dart-define=COGNITO_USER_POOL_ID=us-east-1_xxxx
+  //   --dart-define=COGNITO_CLIENT_ID=xxxxxxxx
+  static const String cognitoUserPoolId = String.fromEnvironment(
+    'COGNITO_USER_POOL_ID',
+    defaultValue: 'us-east-1_zeLVcwtsu',
+  );
+  static const String cognitoClientId = String.fromEnvironment(
+    'COGNITO_CLIENT_ID',
+    defaultValue: '1i19qttnj11rubsuvp8ivr87lc',
+  );
+
+  /// `true` cuando Cognito está configurado → la app exige login.
+  static bool get authEnabled =>
+      cognitoUserPoolId.isNotEmpty && cognitoClientId.isNotEmpty;
 }

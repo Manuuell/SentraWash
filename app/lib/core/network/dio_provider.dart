@@ -2,10 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/app_config.dart';
 import '../tenant/tenant_provider.dart';
+import '../../features/auth/presentation/auth_providers.dart';
 
-/// Cliente HTTP (Dio) configurado con la base de la API y un interceptor que
-/// inyecta el tenant en cada petición (x-tenant-id). Cuando se active Cognito,
-/// aquí se añadirá también el header Authorization con el token Bearer.
+/// Cliente HTTP (Dio) con la base de la API y un interceptor que, en cada
+/// petición, inyecta:
+///  - `Authorization: Bearer <idToken>` si hay sesión de Cognito,
+///  - `x-tenant-id` resuelto del token (o el tenant por defecto si no hay auth).
 final dioProvider = Provider<Dio>((ref) {
   final dio = Dio(
     BaseOptions(
@@ -19,7 +21,11 @@ final dioProvider = Provider<Dio>((ref) {
   dio.interceptors.add(
     InterceptorsWrapper(
       onRequest: (options, handler) {
-        options.headers['x-tenant-id'] = ref.read(tenantProvider);
+        final auth = ref.read(authControllerProvider);
+        options.headers['x-tenant-id'] = auth.tenantId ?? ref.read(tenantProvider);
+        if (auth.idToken != null) {
+          options.headers['Authorization'] = 'Bearer ${auth.idToken}';
+        }
         handler.next(options);
       },
     ),

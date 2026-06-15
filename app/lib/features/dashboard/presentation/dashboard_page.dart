@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_spacing.dart';
 import '../../../core/theme/theme_mode_provider.dart';
 import '../../../core/utils/format.dart';
+import '../../auth/presentation/auth_providers.dart';
 import '../../intake/presentation/plate_scanner_page.dart';
 import '../../work_orders/domain/work_order.dart';
 import '../../work_orders/presentation/work_orders_providers.dart';
@@ -45,6 +47,12 @@ class DashboardPage extends ConsumerWidget {
             icon: Icon(isDark ? Icons.light_mode : Icons.dark_mode),
             onPressed: () => ref.read(themeModeProvider.notifier).toggle(),
           ),
+          if (AppConfig.authEnabled)
+            IconButton(
+              tooltip: 'Cerrar sesión',
+              icon: const Icon(Icons.logout),
+              onPressed: () => ref.read(authControllerProvider.notifier).signOut(),
+            ),
         ],
       ),
       body: ListView(
