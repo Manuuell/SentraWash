@@ -6,6 +6,9 @@ import '../../../core/theme/app_spacing.dart';
 import '../../../core/utils/format.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/error_retry.dart';
+import '../../payments/domain/payment.dart';
+import '../../payments/presentation/payment_sheet.dart';
+import '../../payments/presentation/payments_providers.dart';
 import '../domain/work_order.dart';
 import 'wash_stage.dart';
 import 'work_orders_providers.dart';
@@ -99,6 +102,8 @@ class _OrderCard extends ConsumerWidget {
               children: [
                 Text(formatCop(order.total),
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                const SizedBox(width: AppSpacing.sm),
+                _PaymentBadge(order: order),
                 const Spacer(),
                 if (order.nextStatus != null)
                   FilledButton.tonalIcon(
@@ -108,6 +113,8 @@ class _OrderCard extends ConsumerWidget {
                   ),
               ],
             ),
+            const SizedBox(height: AppSpacing.sm),
+            _PaymentAction(order: order),
           ],
         ),
       ),
@@ -124,5 +131,72 @@ class _OrderCard extends ConsumerWidget {
         );
       }
     }
+  }
+}
+
+/// Total pagado (activo) de una orden; 0 mientras carga.
+double _paidOf(AsyncValue<List<Payment>> async) => async.maybeWhen(
+      data: (pagos) =>
+          pagos.where((p) => p.activo).fold<double>(0, (s, p) => s + p.monto),
+      orElse: () => 0,
+    );
+
+/// Chip de estado de pago junto al total.
+class _PaymentBadge extends ConsumerWidget {
+  final WorkOrder order;
+  const _PaymentBadge({required this.order});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pagado = _paidOf(ref.watch(orderPaymentsProvider(order.id)));
+    if (order.total <= 0) return const SizedBox.shrink();
+
+    if (pagado >= order.total - 0.01) {
+      return _chip('Pagado', AppColors.green, Icons.check_circle);
+    }
+    if (pagado > 0) {
+      return _chip('Abono', AppColors.orange, Icons.timelapse);
+    }
+    return const SizedBox.shrink();
+  }
+
+  Widget _chip(String text, Color c, IconData icon) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: c.withValues(alpha: 0.16),
+          borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          Icon(icon, size: 13, color: c),
+          const SizedBox(width: 4),
+          Text(text, style: TextStyle(color: c, fontSize: 11.5, fontWeight: FontWeight.w700)),
+        ]),
+      );
+}
+
+/// Botón de cobro: oculto si la orden ya está pagada.
+class _PaymentAction extends ConsumerWidget {
+  final WorkOrder order;
+  const _PaymentAction({required this.order});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pagado = _paidOf(ref.watch(orderPaymentsProvider(order.id)));
+    final pendiente = order.total - pagado;
+    if (order.total <= 0 || pendiente <= 0.01) return const SizedBox.shrink();
+
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: () => showPaymentSheet(
+          context,
+          orderId: order.id,
+          numeroOrden: order.numeroOrden,
+          monto: pendiente,
+        ),
+        icon: const Icon(Icons.payments_outlined, size: 18),
+        label: Text(pagado > 0 ? 'Cobrar saldo ${formatCop(pendiente)}' : 'Registrar pago'),
+      ),
+    );
   }
 }
