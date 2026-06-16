@@ -12,6 +12,7 @@ import { ListWorkOrdersUseCase } from './application/use-cases/list-work-orders.
 import { TypeormWorkOrderRepository } from './infrastructure/persistence/typeorm-work-order.repository';
 import { WorkOrderItemOrmEntity } from './infrastructure/persistence/work-order-item.orm-entity';
 import { WorkOrderOrmEntity } from './infrastructure/persistence/work-order.orm-entity';
+import { TrackingController } from './presentation/tracking.controller';
 import { WorkOrdersController } from './presentation/work-orders.controller';
 
 @Module({
@@ -23,7 +24,7 @@ import { WorkOrdersController } from './presentation/work-orders.controller';
     // Para firmar URLs de lectura de las fotos en las respuestas.
     StorageModule,
   ],
-  controllers: [WorkOrdersController],
+  controllers: [WorkOrdersController, TrackingController],
   providers: [
     CreateWorkOrderUseCase,
     ListWorkOrdersUseCase,
