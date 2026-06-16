@@ -4,7 +4,11 @@ import { CustomersModule } from '../customers/customers.module';
 import { WhatsAppModule } from '../whatsapp/whatsapp.module';
 import { ListNotificationsUseCase } from './application/list-notifications.use-case';
 import { NotificationSender } from './application/notification-sender.service';
+import { NotifyOrderCreatedUseCase } from './application/notify-order-created.use-case';
+import { NotifyOrderDeliveredUseCase } from './application/notify-order-delivered.use-case';
 import { NotifyOrderReadyUseCase } from './application/notify-order-ready.use-case';
+import { OrderCreatedListener } from './application/order-created.listener';
+import { OrderDeliveredListener } from './application/order-delivered.listener';
 import { OrderReadyListener } from './application/order-ready.listener';
 import { ProcessPendingNotificationsUseCase } from './application/process-pending-notifications.use-case';
 import { NOTIFICATION_REPOSITORY } from './domain/notification.repository';
@@ -23,6 +27,10 @@ import { NotificationsController } from './presentation/notifications.controller
     NotificationSender,
     NotifyOrderReadyUseCase,
     OrderReadyListener,
+    NotifyOrderCreatedUseCase,
+    OrderCreatedListener,
+    NotifyOrderDeliveredUseCase,
+    OrderDeliveredListener,
     ProcessPendingNotificationsUseCase,
     ListNotificationsUseCase,
     { provide: NOTIFICATION_REPOSITORY, useClass: TypeormNotificationRepository },

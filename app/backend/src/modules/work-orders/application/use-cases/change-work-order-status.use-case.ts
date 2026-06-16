@@ -5,6 +5,10 @@ import { err, ok, Result } from '../../../../core/common/result';
 import { UseCase } from '../../../../core/common/use-case';
 import { WorkOrder } from '../../domain/work-order';
 import {
+  WORK_ORDER_DELIVERED_EVENT,
+  WorkOrderDeliveredEvent,
+} from '../../domain/work-order-delivered.event';
+import {
   WORK_ORDER_READY_EVENT,
   WorkOrderReadyEvent,
 } from '../../domain/work-order-ready.event';
@@ -39,9 +43,9 @@ export class ChangeWorkOrderStatusUseCase
 
     const saved = await this.orders.save(order);
 
-    // Al quedar "listo" se dispara la notificación al cliente (async, desacoplado).
+    // Notificaciones al cliente según la etapa (async, desacoplado).
+    const p = saved.toPrimitives();
     if (estado === WorkOrderStatus.LISTO) {
-      const p = saved.toPrimitives();
       const event: WorkOrderReadyEvent = {
         tenantId: p.tenantId,
         orderId: p.id,
@@ -49,6 +53,20 @@ export class ChangeWorkOrderStatusUseCase
         customerId: p.customerId,
       };
       this.events.emit(WORK_ORDER_READY_EVENT, event);
+    } else if (estado === WorkOrderStatus.ENTREGADO) {
+      const servicios = p.items
+        .map((it) => (it.cantidad > 1 ? `${it.descripcion} x${it.cantidad}` : it.descripcion))
+        .join(', ');
+      const total = '$' + p.total.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      const event: WorkOrderDeliveredEvent = {
+        tenantId: p.tenantId,
+        orderId: p.id,
+        numeroOrden: p.numeroOrden,
+        customerId: p.customerId,
+        servicios: servicios || 'Servicio de lavado',
+        total,
+      };
+      this.events.emit(WORK_ORDER_DELIVERED_EVENT, event);
     }
 
     return ok(saved);

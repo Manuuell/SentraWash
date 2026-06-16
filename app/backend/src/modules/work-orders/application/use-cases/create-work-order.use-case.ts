@@ -1,4 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DomainError, NotFoundError, ValidationError } from '../../../../core/common/domain-error';
 import { err, ok, Result } from '../../../../core/common/result';
 import { UseCase } from '../../../../core/common/use-case';
@@ -13,8 +14,22 @@ import {
 } from '../../../services/domain/service.repository';
 import { NewWorkOrderItem, WorkOrder } from '../../domain/work-order';
 import { WorkOrderChannel } from '../../domain/work-order-channel';
+import {
+  WORK_ORDER_CREATED_EVENT,
+  WorkOrderCreatedEvent,
+} from '../../domain/work-order-created.event';
 import { WORK_ORDER_REPOSITORY, WorkOrderRepository } from '../../domain/work-order.repository';
 import { CreateWorkOrderDto } from '../dto/create-work-order.dto';
+
+/** Etiqueta legible del tipo de vehículo para los mensajes al cliente. */
+const TIPO_LABEL: Record<string, string> = {
+  automovil: 'Automóvil',
+  camioneta: 'Camioneta',
+  moto: 'Moto',
+  taxi: 'Taxi',
+  camion: 'Camión',
+  otro: 'Otro',
+};
 
 /**
  * Crea una orden de lavado. Orquesta varios agregados (capa de aplicación):
@@ -29,6 +44,7 @@ export class CreateWorkOrderUseCase implements UseCase<CreateWorkOrderDto, WorkO
     @Inject(VEHICLE_REPOSITORY) private readonly vehicles: VehicleRepository,
     @Inject(SERVICE_REPOSITORY) private readonly services: ServiceRepository,
     private readonly tenant: TenantManager,
+    private readonly events: EventEmitter2,
   ) {}
 
   async execute(input: CreateWorkOrderDto): Promise<Result<WorkOrder>> {
@@ -85,6 +101,20 @@ export class CreateWorkOrderUseCase implements UseCase<CreateWorkOrderDto, WorkO
       throw error;
     }
 
-    return ok(await this.orders.save(order));
+    const saved = await this.orders.save(order);
+
+    // Notificación de confirmación al cliente (async, desacoplado).
+    const p = saved.toPrimitives();
+    const v = vehicle.toPrimitives();
+    this.events.emit(WORK_ORDER_CREATED_EVENT, {
+      tenantId: p.tenantId,
+      orderId: p.id,
+      numeroOrden: p.numeroOrden,
+      customerId: p.customerId,
+      placa: v.placa,
+      tipoVehiculo: TIPO_LABEL[v.tipo] ?? v.tipo,
+    } satisfies WorkOrderCreatedEvent);
+
+    return ok(saved);
   }
 }

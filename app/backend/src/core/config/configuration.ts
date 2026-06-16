@@ -39,9 +39,13 @@ export interface WhatsAppConfig {
   graphVersion: string;
   /** Número por defecto para envíos (fallback si no se resuelve el del tenant). */
   phoneNumberId: string;
-  /** Nombre del template aprobado para la notificación "vehículo listo". */
+  /** Template "vehículo listo" (al marcar la orden lista). */
   readyTemplate: string;
-  /** Código de idioma del template (debe coincidir con el creado en Meta). */
+  /** Template "orden de servicio" (al crear la orden). */
+  createdTemplate: string;
+  /** Template "recibo" (al entregar la orden). */
+  deliveredTemplate: string;
+  /** Código de idioma de los templates (debe coincidir con Meta). */
   templateLanguage: string;
 }
 
@@ -102,6 +106,8 @@ export default (): RootConfig => ({
     graphVersion: process.env.WHATSAPP_GRAPH_VERSION ?? 'v21.0',
     phoneNumberId: process.env.WHATSAPP_PHONE_NUMBER_ID ?? '',
     readyTemplate: process.env.WHATSAPP_TEMPLATE_READY ?? 'vehiculo_listo',
+    createdTemplate: process.env.WHATSAPP_TEMPLATE_CREATED ?? 'orden_servicio',
+    deliveredTemplate: process.env.WHATSAPP_TEMPLATE_DELIVERED ?? 'recibo_orden',
     templateLanguage: process.env.WHATSAPP_TEMPLATE_LANG ?? 'es',
   },
   storage: {
